@@ -32,12 +32,18 @@ browser = webdriver.Chrome(executable_path='/Users/kerrydriscoll/Downloads/chrom
 """
 Create DataFrame to Populate
 """
-df_final = pd.DataFrame(columns=['Vudu ID', 'Title', 'Rent SD', 'Own SD', 'Rent HD', 'Own HD'])
+df_final = pd.DataFrame(columns=['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD'])
 
 """
 Input MOVIE IDs to reach URL
 """
+
+#Just the Exercise Titles
 IDs=[835625, 763662, 743740, 525129, 873206, 651466]
+
+#All A24 Titles
+#IDs=[906857,835625,651466,763662,908845,743740,449248,873206,767196,682856,648015,464733,922802,465463,629676,841184,777616,761091,569326,682864,532860,906851,857020,904978,613624,859637,892541,875682,548125,569937,613628,577582,449252,525129,854035,820936,752289,802860,656520,682769,772893,778798,701080,772897,554166,400352,910082,770860,772913,841181,752293,805744,772889,732396,914602,656524,829645]
+
 
 
 """
@@ -82,7 +88,13 @@ for ID in IDs:
     rent_hover.perform()
     
     # Wait for page to load
-    sleep(randint(15,25))
+    #sleep(randint(18,30))
+    timeout = 35
+    try:
+        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
+    except TimeoutException:
+        print("Timed out waiting for page to load, rental")
+        continue
 
     # Pull HD rental price
     rent_price_deatil_element = browser.find_elements_by_xpath("//div[@class='_29bQb']")            
@@ -99,7 +111,12 @@ for ID in IDs:
     own_hover.perform()
     
     # Wait for page to load
-    sleep(randint(15,25))
+    #sleep(randint(18,30))
+    try:
+        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
+    except TimeoutException:
+        print("Timed out waiting for page to load, own")
+        continue
         
     # Pull HD purchase price
     own_price_deatil_element = browser.find_elements_by_xpath("//div[@class='_29bQb']")
@@ -111,11 +128,12 @@ for ID in IDs:
     """
 
     df = pd.DataFrame({'Vudu ID': ID, 'Title': title[0], 'Rent SD': [rent_SD],'Own SD':[own_SD], 'Rent HD':[rent_HD], 'Own HD':[own_HD]})
-    df = df[['Vudu ID', 'Title', 'Rent SD', 'Own SD', 'Rent HD', 'Own HD']]
+    df = df[['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD']]
 
     df_final = df_final.append(df, ignore_index=True)
 
 df_final['Vudu ID']=df_final['Vudu ID'].astype(int)
+df_final.sort_values('Vudu ID', ascending=False, inplace=True)
 print(df_final)
 
 
@@ -124,6 +142,7 @@ writer = ExcelWriter('/Users/kerrydriscoll/Desktop/resumes/vudu_prices.xlsx')
 df_final.to_excel(writer)
 writer.save()
 """
+
 
 run_time=time() - start_time
 print("--- {} seconds ---".format(run_time))
