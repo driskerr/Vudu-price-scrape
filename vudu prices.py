@@ -39,10 +39,10 @@ Input MOVIE IDs to reach URL
 """
 
 #Just the Exercise Titles
-IDs=[835625, 763662, 743740, 525129, 873206, 651466]
+#IDs=[835625, 763662, 743740, 525129, 873206, 651466]
 
 #All A24 Titles
-#IDs=[906857,835625,651466,763662,908845,743740,449248,873206,767196,682856,648015,464733,922802,465463,629676,841184,777616,761091,569326,682864,532860,906851,857020,904978,613624,859637,892541,875682,548125,569937,613628,577582,449252,525129,854035,820936,752289,802860,656520,682769,772893,778798,701080,772897,554166,400352,910082,770860,772913,841181,752293,805744,772889,732396,914602,656524,829645]
+IDs=[906857,835625,651466,763662,908845,743740,449248,873206,767196,682856,648015,464733,922802,465463,629676,841184,777616,761091,569326,682864,532860,906851,857020,904978,613624,859637,892541,875682,548125,569937,613628,577582,449252,525129,854035,820936,752289,802860,656520,682769,772893,778798,701080,772897,554166,400352,910082,770860,772913,841181,752293,805744,772889,732396,914602,656524,829645]
 
 
 
@@ -89,11 +89,11 @@ for ID in IDs:
     
     # Wait for page to load
     #sleep(randint(18,30))
-    timeout = 35
+    timeout = 15
     try:
         WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
     except TimeoutException:
-        print("Timed out waiting for page to load, rental")
+        print("Timed out waiting for page to load, rental, {}".format(title[0]))
         continue
 
     # Pull HD rental price
@@ -115,7 +115,7 @@ for ID in IDs:
     try:
         WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
     except TimeoutException:
-        print("Timed out waiting for page to load, own")
+        print("Timed out waiting for page to load, own, {}".format(title[0]))
         continue
         
     # Pull HD purchase price
@@ -134,15 +134,23 @@ for ID in IDs:
 
 df_final['Vudu ID']=df_final['Vudu ID'].astype(int)
 df_final.sort_values('Vudu ID', ascending=False, inplace=True)
+df_final.set_index('Vudu ID', inplace=True)
+df_final[['Rent SD', 'Rent HD', 'Own SD','Own HD']]=df_final[['Rent SD', 'Rent HD', 'Own SD','Own HD']].astype(float)
 print(df_final)
 
+browser.quit()
 
-"""
-writer = ExcelWriter('/Users/kerrydriscoll/Desktop/resumes/vudu_prices.xlsx')
+#test = df_final
+#test[['Rent SD', 'Rent HD', 'Own SD','Own HD']] = test[['Rent SD', 'Rent HD', 'Own SD','Own HD']].applymap("${0:.2f}".format)
+
+#"""
+writer = ExcelWriter('/Users/kerrydriscoll/Desktop/vudu_prices_2.xlsx')
 df_final.to_excel(writer)
+#test.to_excel(writer)
 writer.save()
-"""
+#"""
 
 
 run_time=time() - start_time
 print("--- {} seconds ---".format(run_time))
+print("--- {} seconds per title ---".format(run_time/len(df_final)))
