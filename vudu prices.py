@@ -6,8 +6,10 @@ Created on Tue Mar 20 09:21:44 2018
 """
 import pandas as pd
 from pandas import ExcelWriter
+from openpyxl import load_workbook
 import re
 from time import time, sleep
+import datetime
 from random import randint
 from selenium import webdriver 
 from selenium.webdriver.common.by import By 
@@ -32,7 +34,7 @@ browser = webdriver.Chrome(executable_path='/Users/kerrydriscoll/Downloads/chrom
 """
 Create DataFrame to Populate
 """
-df_final = pd.DataFrame(columns=['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD'])
+df_final = pd.DataFrame(columns=['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD', 'Time Stamp'])
 
 """
 Input MOVIE IDs to reach URL
@@ -44,7 +46,7 @@ Input MOVIE IDs to reach URL
 #All A24 Titles
 IDs=[906857,835625,651466,763662,908845,743740,449248,873206,767196,682856,648015,464733,922802,465463,629676,841184,777616,761091,569326,682864,532860,906851,857020,904978,613624,859637,892541,875682,548125,569937,613628,577582,449252,525129,854035,820936,752289,802860,656520,682769,772893,778798,701080,772897,554166,400352,910082,770860,772913,841181,752293,805744,772889,732396,914602,656524,829645]
 
-
+try_again = []
 
 """
 Extract Data for each MOVIE
@@ -80,6 +82,7 @@ for ID in IDs:
     """
     Extract HD Rent Price
     """
+    sleep(randint(1,3))
     
     #Hover Mouse over Rents to Reveal Definition Options
     rent_element_to_hover_over_xpath = browser.find_elements_by_xpath("//div[@class='col-xs-4 nr-p-0']")
@@ -89,11 +92,12 @@ for ID in IDs:
     
     # Wait for page to load
     #sleep(randint(18,30))
-    timeout = 15
+    timeout = 5
     try:
         WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
     except TimeoutException:
         print("Timed out waiting for page to load, rental, {}".format(title[0]))
+        try_again.append(ID)
         continue
 
     # Pull HD rental price
@@ -104,7 +108,7 @@ for ID in IDs:
     """
     Extract HD Own Price
     """
-    #Hover Mouse over Own to Reveal Definition Options    
+    #Hover Mouse over Own to Reveal Definition Options  
     own_element_to_hover_over_xpath = browser.find_elements_by_xpath("//div[@class='col-xs-4 nr-pl-10 nr-pr-0']")
     own_element_to_hover_over = own_element_to_hover_over_xpath[0]
     own_hover = ActionChains(browser).move_to_element(own_element_to_hover_over)
@@ -116,6 +120,7 @@ for ID in IDs:
         WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
     except TimeoutException:
         print("Timed out waiting for page to load, own, {}".format(title[0]))
+        try_again.append(ID)
         continue
         
     # Pull HD purchase price
@@ -127,10 +132,11 @@ for ID in IDs:
     Combine with other Titles
     """
 
-    df = pd.DataFrame({'Vudu ID': ID, 'Title': title[0], 'Rent SD': [rent_SD],'Own SD':[own_SD], 'Rent HD':[rent_HD], 'Own HD':[own_HD]})
-    df = df[['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD']]
+    df = pd.DataFrame({'Vudu ID': ID, 'Title': title[0], 'Rent SD': [rent_SD],'Own SD':[own_SD], 'Rent HD':[rent_HD], 'Own HD':[own_HD], 'Time Stamp':datetime.datetime.now().strftime("%H:%M:%S")})
+    df = df[['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD', 'Time Stamp']]
 
     df_final = df_final.append(df, ignore_index=True)
+
 
 df_final['Vudu ID']=df_final['Vudu ID'].astype(int)
 df_final.sort_values('Vudu ID', ascending=False, inplace=True)
@@ -140,12 +146,16 @@ print(df_final)
 
 browser.quit()
 
+#if you want to change to currency format
 #test = df_final
 #test[['Rent SD', 'Rent HD', 'Own SD','Own HD']] = test[['Rent SD', 'Rent HD', 'Own SD','Own HD']].applymap("${0:.2f}".format)
 
 #"""
-writer = ExcelWriter('/Users/kerrydriscoll/Desktop/vudu_prices_2.xlsx')
-df_final.to_excel(writer)
+path = '/Users/kerrydriscoll/Desktop/resumes/A24/vudu_prices.xlsx'
+book = load_workbook(path)
+writer = ExcelWriter(path, engine = 'openpyxl')
+writer.book = book
+df_final.to_excel(writer, sheet_name=datetime.date.today().strftime("%Y-%m-%d"))
 #test.to_excel(writer)
 writer.save()
 #"""
