@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 import re
 from time import time, sleep
 import datetime
-from random import randint
+import random
 from selenium import webdriver 
 from selenium.webdriver.common.by import By 
 from selenium.webdriver.support.ui import WebDriverWait 
@@ -83,7 +83,7 @@ for ID in IDs:
     """
     Extract HD Rent Price
     """
-    sleep(randint(1,3))
+    sleep(random.uniform(0.3, 0.8))
     
     #Hover Mouse over Rents to Reveal Definition Options
     rent_element_to_hover_over_xpath = browser.find_elements_by_xpath("//div[@class='col-xs-4 nr-p-0']")
