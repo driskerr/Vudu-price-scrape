@@ -4,7 +4,15 @@ Created on Tue Mar 20 09:21:44 2018
 
 @author: kerrydriscoll
 """
+
+"""
+TO DO:
+* Can I write a function to open multiple chrome tabs? Then run the list in parallel?
+- https://stackoverflow.com/questions/18150593/selenium-multiple-tabs-at-once
+"""
+
 import pandas as pd
+import numpy as np
 from pandas import ExcelWriter
 from openpyxl import load_workbook
 import re
@@ -46,6 +54,7 @@ Input MOVIE IDs to reach URL
 #All A24 Titles
 #IDs=[906857,835625,651466,763662,908845,743740,449248,873206,767196,682856,648015,464733,922802,465463,629676,841184,777616,761091,569326,682864,532860,906851,857020,904978,613624,859637,892541,875682,548125,569937,613628,577582,449252,525129,854035,820936,752289,802860,656520,682769,772893,778798,701080,772897,554166,400352,910082,770860,772913,841181,752293,805744,772889,732396,914602,656524,829645]
 IDs=pd.read_excel('/Users/kerrydriscoll/Desktop/resumes/A24/A24 IDs.xlsx')['VUDU'].tolist()
+IDs = [int(i) for i in IDs if str(i)!='nan']
 
 try_again = []
 
@@ -58,7 +67,7 @@ for ID in IDs:
     # Wait 20 seconds for page to load
     timeout = 20
     try:
-        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//h1[@class='head-big _3ehdP']")))
+        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_14Rip']")))
     except TimeoutException:
         print("Timed out waiting for page to load")
         browser.quit()
@@ -67,7 +76,7 @@ for ID in IDs:
     Extract Movie Title
     """
 
-    title_element = browser.find_elements_by_xpath("//h1[@class='head-big _3ehdP']")
+    title_element = browser.find_elements_by_xpath("//div[@class='_14Rip']")
     title = [x.text for x in title_element]
     
     """
@@ -95,14 +104,15 @@ for ID in IDs:
     #sleep(randint(18,30))
     timeout = 5
     try:
-        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
+        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='VpQTC']")))
     except TimeoutException:
         print("Timed out waiting for page to load, rental, {}".format(title[0]))
         try_again.append(ID)
         continue
 
     # Pull HD rental price
-    rent_price_deatil_element = browser.find_elements_by_xpath("//div[@class='_29bQb']")            
+    #rent_price_deatil_element = browser.find_elements_by_xpath("//div[@class='_29bQb']")            
+    rent_price_deatil_element = browser.find_elements_by_xpath("//div[@class='VpQTC']")            
     rent_prices_deatil = [x.text for x in rent_price_deatil_element]
     rent_HD = re.search('HDX \$(\d*\.?\d*)',rent_prices_deatil[0]).group(1)
 
@@ -118,14 +128,14 @@ for ID in IDs:
     # Wait for page to load
     #sleep(randint(18,30))
     try:
-        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='_29bQb']")))
+        WebDriverWait(browser, timeout).until(EC.visibility_of_element_located((By.XPATH, "//div[@class='VpQTC']")))
     except TimeoutException:
         print("Timed out waiting for page to load, own, {}".format(title[0]))
         try_again.append(ID)
         continue
         
     # Pull HD purchase price
-    own_price_deatil_element = browser.find_elements_by_xpath("//div[@class='_29bQb']")
+    own_price_deatil_element = browser.find_elements_by_xpath("//div[@class='VpQTC']")
     own_prices_deatil = [x.text for x in own_price_deatil_element]
     own_HD = re.search('HDX \$(\d*\.?\d*)',own_prices_deatil[0]).group(1)
     
