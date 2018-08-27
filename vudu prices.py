@@ -42,7 +42,7 @@ browser = webdriver.Chrome(executable_path='/Users/kerrydriscoll/Downloads/chrom
 """
 Create DataFrame to Populate
 """
-df_final = pd.DataFrame(columns=['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD', 'Time Stamp'])
+df_final = pd.DataFrame(columns=['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD','Flag','Time Stamp'])
 
 """
 Input MOVIE IDs to reach URL
@@ -80,13 +80,25 @@ for ID in IDs:
     title = [x.text for x in title_element]
     
     """
+    Extract Special Flag
+    """
+    flag_element = browser.find_elements_by_xpath("//div[@class='_2Mm8D']//div[@class='_10zmy']")
+    flag = [x.text for x in flag_element]
+    
+    if len(flag)==0:
+        flag.append(None)
+    
+    """
     Extract SD Rent & Own Prices
     """
 
     price_element = browser.find_elements_by_xpath("//div[@class='row nr-p-0 nr-mb-10']")
     prices = [x.text for x in price_element]
 
-    rent_SD = re.search('Rent \$(\d*\.?\d*)', prices[0]).group(1)
+    if re.search('Rent \$(\d*\.?\d*)', prices[0]) is not None:
+        rent_SD = re.search('Rent \$(\d*\.?\d*)', prices[0]).group(1)
+    else:
+        rent_SD = None
     own_SD = re.search('Own \$(\d*\.?\d*)', prices[0]).group(1)
     
     """
@@ -108,13 +120,17 @@ for ID in IDs:
     except TimeoutException:
         print("Timed out waiting for page to load, rental, {}".format(title[0]))
         try_again.append(ID)
-        continue
+        pass
 
     # Pull HD rental price
     #rent_price_deatil_element = browser.find_elements_by_xpath("//div[@class='_29bQb']")            
     rent_price_deatil_element = browser.find_elements_by_xpath("//div[@class='VpQTC']")            
     rent_prices_deatil = [x.text for x in rent_price_deatil_element]
-    rent_HD = re.search('HDX \$(\d*\.?\d*)',rent_prices_deatil[0]).group(1)
+    
+    if re.search('HDX \$(\d*\.?\d*)',rent_prices_deatil[0]) is not None:
+        rent_HD = re.search('HDX \$(\d*\.?\d*)',rent_prices_deatil[0]).group(1)
+    else:
+        rent_HD = None
 
     """
     Extract HD Own Price
@@ -132,7 +148,7 @@ for ID in IDs:
     except TimeoutException:
         print("Timed out waiting for page to load, own, {}".format(title[0]))
         try_again.append(ID)
-        continue
+        pass
         
     # Pull HD purchase price
     own_price_deatil_element = browser.find_elements_by_xpath("//div[@class='VpQTC']")
@@ -143,8 +159,8 @@ for ID in IDs:
     Combine with other Titles
     """
 
-    df = pd.DataFrame({'Vudu ID': ID, 'Title': title[0], 'Rent SD': [rent_SD],'Own SD':[own_SD], 'Rent HD':[rent_HD], 'Own HD':[own_HD], 'Time Stamp':datetime.datetime.now().strftime("%H:%M:%S")})
-    df = df[['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD', 'Time Stamp']]
+    df = pd.DataFrame({'Vudu ID': ID, 'Title': title[0], 'Rent SD': [rent_SD],'Own SD':[own_SD], 'Rent HD':[rent_HD], 'Own HD':[own_HD], 'Flag':[flag][0], 'Time Stamp':datetime.datetime.now().strftime("%H:%M:%S")})
+    df = df[['Vudu ID', 'Title', 'Rent SD','Rent HD','Own SD','Own HD','Flag','Time Stamp']]
 
     df_final = df_final.append(df, ignore_index=True)
 
